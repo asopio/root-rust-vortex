@@ -1,0 +1,19 @@
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "root-vortex"
+version = "0.1.0"
+description = "Convert CERN ROOT files to the Vortex columnar format"
+license = { text = "MIT" }
+requires-python = ">=3.9"
+keywords = ["ROOT", "HEP", "vortex", "columnar"]
+classifiers = [
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: 3",
+]
+
+[tool.maturin]
+features = ["pyo3/extension-module"]
+manifest-path = "Cargo.toml"
