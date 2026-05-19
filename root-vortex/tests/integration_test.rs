@@ -4,7 +4,6 @@
 //! and verify the output file exists and has a non-zero size.
 
 use std::fs;
-use tempfile::NamedTempFile;
 use tempfile::TempDir;
 
 use oxyroot::{RootFile, WriterTree};
@@ -63,9 +62,9 @@ fn create_primitives_root_file(path: &str) -> anyhow::Result<()> {
 
 #[test]
 fn test_tree_info_basic() -> anyhow::Result<()> {
-    let tmp = NamedTempFile::with_suffix(".root")?;
-    let root_path = tmp.path().to_str().unwrap().to_string();
-    create_test_root_file(&root_path)?;
+    let dir = TempDir::new()?;
+    let root_path = dir.path().join("test.root");
+    create_test_root_file(root_path.to_str().unwrap())?;
 
     let info = tree_info(&root_path, "test_tree")?;
     assert_eq!(info.name, "test_tree");
@@ -144,6 +143,9 @@ fn test_convert_missing_tree_fails() -> anyhow::Result<()> {
 
 #[test]
 fn test_convert_missing_root_file_fails() {
-    let result = convert_root_to_vortex("/tmp/does_not_exist.root", "/tmp/out.vortex", "tree");
+    let dir = TempDir::new().expect("temp dir");
+    let root_path = dir.path().join("does_not_exist.root");
+    let vortex_path = dir.path().join("out.vortex");
+    let result = convert_root_to_vortex(&root_path, &vortex_path, "tree");
     assert!(result.is_err(), "expected error for missing ROOT file");
 }

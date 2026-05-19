@@ -31,7 +31,9 @@ use vortex::session::VortexSession;
 ///
 /// # Errors
 /// Returns an error if the ROOT file cannot be opened, the tree is not found,
-/// any branch cannot be converted, or writing the Vortex file fails.
+/// any *supported* branch fails conversion, or writing the Vortex file fails.
+/// Branches with unsupported types are skipped and reported in
+/// [`ConversionSummary::columns_skipped`].
 ///
 /// # Example
 /// ```no_run
@@ -56,7 +58,9 @@ pub fn convert_root_to_vortex(
         .get_tree(tree_name)
         .with_context(|| format!("getting tree '{}' from {}", tree_name, root_path.display()))?;
 
-    let entries = tree.entries() as usize;
+    let raw_entries = tree.entries();
+    let entries = usize::try_from(raw_entries)
+        .with_context(|| format!("tree '{}' has invalid entry count: {}", tree_name, raw_entries))?;
     debug!("Tree '{}': {} entries", tree_name, entries);
 
     // Collect all top-level branches → (name, vortex array)
@@ -66,17 +70,24 @@ pub fn convert_root_to_vortex(
 
     for branch in tree.branches() {
         let bname = branch.name().to_string();
-        match branch_to_array(branch) {
-            Ok(arr) => {
-                debug!("Branch '{}': {} → {} elements", bname, branch.item_type_name(), arr.len());
-                names.push(bname);
-                arrays.push(arr);
-            }
-            Err(e) => {
-                warn!("Skipping branch '{}': {}", bname, e);
-                skipped.push(bname);
-            }
+        let interp = branch.interpretation();
+
+        if !is_supported_interpretation(&interp) {
+            warn!("Skipping branch '{}': unsupported branch type: {}", bname, interp);
+            skipped.push(bname);
+            continue;
         }
+
+        let arr = branch_to_array(branch)
+            .with_context(|| format!("converting branch '{}' ({})", bname, interp))?;
+        debug!(
+            "Branch '{}': {} → {} elements",
+            bname,
+            branch.item_type_name(),
+            arr.len()
+        );
+        names.push(bname);
+        arrays.push(arr);
     }
 
     if names.is_empty() {
@@ -165,6 +176,14 @@ pub fn branch_to_array(branch: &oxyroot::Branch) -> Result<ArrayRef> {
         }
         other => bail!("unsupported branch type: {}", other),
     }
+}
+
+fn is_supported_interpretation(interp: &str) -> bool {
+    matches!(
+        interp,
+        "bool" | "i8" | "i16" | "i32" | "i64" | "u8" | "u16" | "u32" | "u64" | "f32" | "f64"
+            | "String"
+    )
 }
 
 // ---------------------------------------------------------------------------
