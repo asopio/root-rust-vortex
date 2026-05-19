@@ -1,0 +1,18 @@
+[package]
+name = "root-vortex-py"
+version = "0.1.0"
+edition = "2021"
+description = "Python bindings for root-vortex"
+license = "MIT"
+
+[lib]
+name = "root_vortex"
+crate-type = ["cdylib"]
+
+[dependencies]
+root_vortex_lib = { package = "root-vortex", path = "../root-vortex" }
+pyo3 = { version = "0.22", features = ["extension-module"] }
+anyhow = "1"
+
+[build-dependencies]
+pyo3-build-config = "0.22"

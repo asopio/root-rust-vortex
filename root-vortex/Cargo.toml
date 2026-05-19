@@ -1,0 +1,20 @@
+[package]
+name = "root-vortex"
+version = "0.1.0"
+edition = "2021"
+description = "Convert ROOT (CERN) files and trees to the Vortex columnar format"
+license = "MIT"
+repository = "https://github.com/asopio/root-rust-vortex"
+
+[dependencies]
+oxyroot = "0.1.25"
+# main vortex umbrella crate; includes vortex-file via the default 'files' feature
+vortex = "0.71.0"
+# vortex-io exposes the single-threaded blocking runtime
+vortex-io = "0.71.0"
+anyhow = "1"
+log = "0.4"
+
+[dev-dependencies]
+tempfile = "3"
+env_logger = "0.11"

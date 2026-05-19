@@ -1,0 +1,10 @@
+/target/
+**/*.rs.bk
+Cargo.lock
+*.so
+*.pyd
+*.egg-info/
+dist/
+__pycache__/
+.venv/
+/data/*.vortex

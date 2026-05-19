@@ -1,0 +1,7 @@
+[workspace]
+members = [
+    "root-vortex",
+    "root-vortex-cli",
+    "root-vortex-py",
+]
+resolver = "2"
