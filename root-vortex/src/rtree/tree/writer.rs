@@ -13,9 +13,8 @@ use log::trace;
 /// Mainly used to create [crate::Branch] with name with a provider of data.
 ///
 /**
-```
-use crate::RootFile;
-use crate::WriterTree;
+```ignore
+use root_vortex::{RootFile, WriterTree};
 let s = "/tmp/simple.root";
 let mut file = RootFile::create(s).expect("Can not create file");
 let mut tree = WriterTree::new("mytree");
@@ -91,7 +90,7 @@ impl WriterTree {
     ///
     /// At this point, the iterator is not consumed, it will be by calling the write method.
     /// The `T` type has to implement [Marshaler](crate::Marshaler) to be able to write to the file.
-    /// Implementation for basic types are provided by oxyroot.
+    /// Implementations for basic types are provided by the internal ROOT writer support.
     ///
     /// In order to write a custom type, you have to implement the Marshaler trait or use the derive
     /// [WriteToTree macro](derive.WriteToTree.html).

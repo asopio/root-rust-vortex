@@ -724,7 +724,7 @@ impl RootFile {
             span.marshal(&mut buf)?;
         }
 
-        if buf.pos() != nbytes.into() {
+        if buf.pos() != nbytes as i64 {
             unimplemented!("buf.pos() != nbytes as usize")
         }
 

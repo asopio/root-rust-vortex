@@ -6,8 +6,8 @@ use std::fmt::Debug;
 /// Represent a array of `T*` in C++
 ///
 /// To read branch with `int` (aka `i32` rust) in it
-/// ```rust
-/// use oxyroot::RootFile;
+/// ```ignore
+/// use root_vortex::{RootFile, Slice};
 ///
 /// let s = "examples/from_uproot/data/small-evnt-tree-fullsplit.root";///
 /// let mut f = RootFile::open(s).unwrap();
@@ -15,7 +15,7 @@ use std::fmt::Debug;
 ///
 /// tree.branch("SliceI16")
 ///         .unwrap()
-///         .as_iter::<oxyroot::Slice<i16>>().expect("wrong type")
+///         .as_iter::<Slice<i16>>().expect("wrong type")
 ///         .map(|a| a.into_vec())
 ///         .enumerate()
 ///         .for_each(|(i, val)| {

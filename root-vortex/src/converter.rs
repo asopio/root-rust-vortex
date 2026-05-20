@@ -11,7 +11,8 @@ use log::{debug, warn};
 use vortex::VortexSessionDefault;
 use vortex::array::arrays::list::ListArray;
 use vortex::array::arrays::{PrimitiveArray, StructArray, VarBinViewArray};
-use vortex::array::dtype::{DType, NativePType, Nullability};
+use vortex::array::dtype::NativePType;
+use vortex::array::validity::Validity;
 use vortex::array::{ArrayRef, IntoArray};
 use vortex::file::WriteOptionsSessionExt;
 use vortex::io::runtime::BlockingRuntime;
@@ -224,11 +225,26 @@ where
 
 fn list_branch<T>(branch: &Branch) -> Result<ArrayRef>
 where
-    T: UnmarshalerInto<Item = T> + NativePType + Into<vortex::scalar::Scalar> + 'static,
+    T: UnmarshalerInto<Item = T> + NativePType + 'static,
 {
     let values: Vec<Vec<T>> = branch.as_iter::<Vec<T>>()?.collect();
-    Ok(ListArray::from_iter_slow::<u32, _>(
-        values,
-        std::sync::Arc::new(DType::Primitive(T::PTYPE, Nullability::NonNullable)),
-    )?)
+    let mut offsets = Vec::with_capacity(values.len() + 1);
+    offsets.push(0_u32);
+    let mut flattened = Vec::new();
+
+    for row in values {
+        flattened.extend(row);
+        offsets.push(
+            u32::try_from(flattened.len()).context("vector branch exceeds u32 offset range")?,
+        );
+    }
+
+    let elements: PrimitiveArray = flattened.into_iter().collect();
+    let offsets: PrimitiveArray = offsets.into_iter().collect();
+    Ok(ListArray::new(
+        elements.into_array(),
+        offsets.into_array(),
+        Validity::NonNullable,
+    )
+    .into_array())
 }

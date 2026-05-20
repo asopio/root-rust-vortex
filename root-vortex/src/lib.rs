@@ -51,9 +51,12 @@ pub mod converter;
 pub mod info;
 
 pub use error::Result;
-pub use rbytes::{Unmarshaler, UnmarshalerInto};
+pub use rbytes::rbuffer::RBuffer;
+pub use rbytes::{Marshaler, Unmarshaler, UnmarshalerInto};
 pub use riofs::file::RootFile;
+pub use root::traits::{Named, Object};
 pub use rtree::branch::Branch;
+pub use rtree::tree::branch_name::BranchName;
 pub use rtree::tree::reader::ReaderTree;
 pub use rtree::tree::{StateCallBack, WriterTree};
 pub use rusty::{SizedSlice, Slice};
