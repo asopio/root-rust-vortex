@@ -175,6 +175,7 @@ macro_rules! impl_marshalers_primitive {
                     "u8" => "uint8_t",
                     "f32" => "float",
                     "f64" => "double",
+                    "bool" => "bool",
 
                     _ => unimplemented!("Marshaler.class_name for {}", type_name::<Self>()),
                 };
@@ -225,7 +226,7 @@ macro_rules! impl_marshalers_primitive {
                 }
 
                 if ty == TypeId::of::<bool>() {
-                    return "B".to_string();
+                    return "O".to_string();
                 }
 
                 unimplemented!("Marshaler.root_code for {}", type_name::<Self>())
@@ -241,7 +242,7 @@ macro_rules! impl_marshalers_primitive {
         paste! {
                     impl $crate::root::traits::Object for $ftype {
                 fn class(&self) -> &'_ str {
-                "[<$ftype>]"
+                    std::any::type_name::<Self>()
                 }
             }
         }
@@ -523,7 +524,7 @@ pub fn ensure_minimum_supported_version(
     min_supported_version: i16,
     class_involved: &str,
 ) -> Result<()> {
-    if read_version <= min_supported_version {
+    if read_version < min_supported_version {
         return Err(Error::VersionTooLow {
             class: class_involved.into(),
             version_read: read_version,

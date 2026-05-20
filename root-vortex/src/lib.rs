@@ -20,6 +20,7 @@
 //! | `uint64_t`             | `PrimitiveArray<u64>` |
 //! | `float`                | `PrimitiveArray<f32>` |
 //! | `double`               | `PrimitiveArray<f64>` |
+//! | `char*` / `std::string`| `VarBinViewArray`   |
 //! | `std::vector<T>`       | `ListArray<T>`      |
 //!
 //! Other unsupported branches are skipped with a warning.

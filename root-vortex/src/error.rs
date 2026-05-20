@@ -4,6 +4,7 @@ pub type Result<T> = core::result::Result<T, Error>;
 pub enum Error {
     TypeMismatch { expected: String, given: String },
     BranchNotFound { name: String },
+    Decode(crate::rbytes::Error),
 }
 
 impl std::fmt::Display for Error {
@@ -13,3 +14,9 @@ impl std::fmt::Display for Error {
 }
 
 impl std::error::Error for Error {}
+
+impl From<crate::rbytes::Error> for Error {
+    fn from(e: crate::rbytes::Error) -> Self {
+        Error::Decode(e)
+    }
+}

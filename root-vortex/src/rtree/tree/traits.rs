@@ -140,7 +140,7 @@ where
         tree: &mut crate::WriterTree,
         branch_name: Option<&str>,
     ) -> crate::Result<()> {
-        tree.new_branch(branch_name.unwrap(), it);
+        tree.new_branch(branch_name.unwrap_or("data"), it);
         Ok(())
     }
 }

@@ -55,23 +55,19 @@ fn kind_of(buf: &[u8]) -> Kind {
 }
 
 pub fn decompress(dst: &mut [u8], mut src: &[u8]) -> Result<usize> {
-    let _beg = 0;
-    let mut end = 0;
+    let mut beg: usize = 0;
+    let mut end: i64 = 0;
     let buflen = dst.len() as i64;
     let mut hdr = [0_u8; HEADER_SIZE];
 
-    // let mut v =
-
     while end < buflen {
-        // let src = src.as_mut();
         src.read_exact(&mut hdr)?;
-        // let _ = src.read_exact(dst)?;
-        // let _ = src.read_exact(dst)?;
 
-        let _srcsz = hdr[3] as i64 | (hdr[4] as i64) << 8 | (hdr[5] as i64) << 16;
-        let tgtsz = hdr[6] as i64 | (hdr[7] as i64) << 8 | (hdr[8] as i64) << 16;
-        // let tgtsz = hdr[6]) | int64(hdr[7])<<8 | int64(hdr[8])<<16
-        end += tgtsz;
+        let srcsz = hdr[3] as usize | (hdr[4] as usize) << 8 | (hdr[5] as usize) << 16;
+        let tgtsz = hdr[6] as usize | (hdr[7] as usize) << 8 | (hdr[8] as usize) << 16;
+        end += tgtsz as i64;
+
+        let block_dst = &mut dst[beg..beg + tgtsz];
 
         match kind_of(hdr.as_ref()) {
             Kind::Inherit => {
@@ -82,22 +78,23 @@ pub fn decompress(dst: &mut [u8], mut src: &[u8]) -> Result<usize> {
             }
 
             Kind::Zlib => {
-                let mut d = ZlibDecoder::new(src);
-                d.read_exact(dst.as_mut())?;
-                return Ok(0);
+                let mut d = ZlibDecoder::new(&src[..srcsz]);
+                d.read_exact(block_dst)?;
+                src = &src[srcsz..];
             }
             Kind::Lzma => {
-                let mut d = XzDecoder::new(src);
-                d.read_exact(dst.as_mut())?;
+                let mut d = XzDecoder::new(&src[..srcsz]);
+                d.read_exact(block_dst)?;
+                src = &src[srcsz..];
             }
             Kind::OldCompression => {
                 unimplemented!()
             }
             Kind::LZ4 => {
-                LZ4_decompress_to_buffer(&src[8..], Some(dst.len() as i32), dst)?;
-                return Ok(0);
-                // let mut d = LZ4Decoder::new(src)?;
-                // d.read_exact(dst.as_mut())?;
+                // The first 8 bytes are an LZ4 block sub-header (already counted in srcsz).
+                // The actual compressed payload starts at offset 8.
+                LZ4_decompress_to_buffer(&src[8..srcsz], Some(tgtsz as i32), block_dst)?;
+                src = &src[srcsz..];
             }
             Kind::Zstd => {
                 unimplemented!()
@@ -106,9 +103,11 @@ pub fn decompress(dst: &mut [u8], mut src: &[u8]) -> Result<usize> {
                 unimplemented!()
             }
         }
+
+        beg += tgtsz;
     }
 
-    Ok(0)
+    Ok(beg)
 }
 
 fn root_compress_algo_level(algo: i32) -> (Kind, i32) {

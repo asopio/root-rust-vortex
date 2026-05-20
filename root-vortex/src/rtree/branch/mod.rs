@@ -244,10 +244,6 @@ impl Branch {
     where
         T: UnmarshalerInto<Item = T> + 'a,
     {
-        // println!("typename of branch: {}", self.item_type_name());
-        // println!("typename of type: {:?}", T::classe_name());
-        // println!("typename of type: {:?}", type_name::<T>());
-
         let ok_typename = match T::classe_name() {
             None => true,
             Some(tys) => tys.contains(&self.item_type_name()),
@@ -259,17 +255,21 @@ impl Branch {
                 expected: self.item_type_name(),
             })
         } else {
-            Ok(self.get_basket(|r| r.read_object_into::<T>().unwrap()))
+            let items: crate::rbytes::Result<Vec<T>> =
+                self.get_basket(|r| r.read_object_into::<T>()).collect();
+            Ok(items.map_err(crate::error::Error::Decode)?.into_iter())
         }
     }
 
     /// Create an iterator over the data of a column (`TBranch`) but will not check if the provided `T` is
     /// compatible with actual C++ type of the column.
-    pub fn as_iter_unchecked<'a, T>(&'a self) -> impl Iterator<Item = T> + 'a
+    pub fn as_iter_unchecked<'a, T>(&'a self) -> crate::Result<impl Iterator<Item = T> + 'a>
     where
         T: UnmarshalerInto<Item = T> + 'a,
     {
-        self.get_basket(|r| r.read_object_into::<T>().unwrap())
+        let items: crate::rbytes::Result<Vec<T>> =
+            self.get_basket(|r| r.read_object_into::<T>()).collect();
+        Ok(items.map_err(crate::error::Error::Decode)?.into_iter())
     }
 
     pub(crate) fn _streamer_type(&self) -> Option<i32> {

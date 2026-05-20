@@ -11,19 +11,22 @@ lazy_static! {
 }
 
 pub fn parse_typename(typename: &str) -> i32 {
-    let tokens = RE.captures(typename).unwrap();
+    let captures = match RE.captures(typename) {
+        Some(c) => c,
+        None => return 0,
+    };
 
-    trace!("tokens = {:?}", tokens);
+    trace!("tokens = {:?}", captures);
 
-    if tokens.get(0).unwrap().as_str() == "vector" {
+    if captures.get(0).unwrap().as_str() == "vector" {
         return 6;
     }
 
-    if tokens.get(0).unwrap().as_str() == "set" {
+    if captures.get(0).unwrap().as_str() == "set" {
         return 6;
     }
 
-    if tokens.get(0).unwrap().as_str() == "map" {
+    if captures.get(0).unwrap().as_str() == "map" {
         return 12;
     }
 

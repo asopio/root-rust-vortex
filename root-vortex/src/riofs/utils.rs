@@ -7,7 +7,10 @@ pub fn decode_name_cycle(namecycle: &str) -> Result<(&str, u16), Error> {
     match toks.len() {
         1 => Ok((toks[0], 9999)),
         2 => {
-            unimplemented!()
+            let cycle = toks[1]
+                .parse::<u16>()
+                .map_err(|_| Error::CantDecodeNameCycle(namecycle.to_string()))?;
+            Ok((toks[0], cycle))
         }
 
         _ => Err(Error::CantDecodeNameCycle(namecycle.to_string())),
@@ -15,9 +18,7 @@ pub fn decode_name_cycle(namecycle: &str) -> Result<(&str, u16), Error> {
 }
 
 pub(crate) fn now() -> DateTime<Utc> {
-    //Utc::now()
-    // FIXME: use chrono::Utc::now() when debug is done
-    DateTime::from_timestamp(1657861095, 0).unwrap()
+    Utc::now()
 }
 
 pub(crate) fn datetime_to_u32(datetime: DateTime<Utc>) -> u32 {

@@ -261,7 +261,7 @@ impl Unmarshaler for ReaderTree {
             // tree.aliases
             let v = r.read_object_any_into()?;
             if v.is_some() {
-                todo!()
+                trace!(";Tree.unmarshal.{}.aliases: skipping", _beg);
             }
         }
 
@@ -269,7 +269,7 @@ impl Unmarshaler for ReaderTree {
             //tree.indexValues
             let v = r.read_object_any_into()?;
             if v.is_some() {
-                todo!()
+                trace!(";Tree.unmarshal.{}.indexValues: skipping", _beg);
             }
         }
 
@@ -277,7 +277,7 @@ impl Unmarshaler for ReaderTree {
             //tree.index
             let v = r.read_object_any_into()?;
             if v.is_some() {
-                todo!()
+                trace!(";Tree.unmarshal.{}.index: skipping", _beg);
             }
         }
 
@@ -285,13 +285,13 @@ impl Unmarshaler for ReaderTree {
             //tree.treeindex
             let v = r.read_object_any_into()?;
             if v.is_some() {
-                todo!()
+                trace!(";Tree.unmarshal.{}.treeindex: skipping", _beg);
             }
 
             //tree.friends
             let v = r.read_object_any_into()?;
             if v.is_some() {
-                todo!()
+                trace!(";Tree.unmarshal.{}.friends: skipping", _beg);
             }
 
             trace!(";Tree.unmarshal.{}.pos_before_user_info: {}", _beg, r.pos());
@@ -308,14 +308,10 @@ impl Unmarshaler for ReaderTree {
 
             trace!(";Tree.unmarshal.{}.pos_after_user_info: {}", _beg, r.pos());
 
-            // let user_info = r.read_object_into::<ReaderList>()?;
-
-            // todo!();
-
             //tree.branchRef
             let v = r.read_object_any_into()?;
             if v.is_some() {
-                todo!()
+                trace!(";Tree.unmarshal.{}.branchRef: skipping", _beg);
             }
         }
 
