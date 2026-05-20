@@ -5,12 +5,14 @@
 use std::fs::File;
 use std::path::Path;
 
+use crate::{Branch, RootFile, UnmarshalerInto};
 use anyhow::{Context, Result, bail};
 use log::{debug, warn};
-use oxyroot::RootFile;
 use vortex::VortexSessionDefault;
+use vortex::array::arrays::list::ListArray;
 use vortex::array::arrays::{PrimitiveArray, StructArray, VarBinViewArray};
 use vortex::array::dtype::NativePType;
+use vortex::array::validity::Validity;
 use vortex::array::{ArrayRef, IntoArray};
 use vortex::file::WriteOptionsSessionExt;
 use vortex::io::runtime::BlockingRuntime;
@@ -146,10 +148,10 @@ pub struct ConversionSummary {
 // Branch → Array dispatch
 // ---------------------------------------------------------------------------
 
-/// Convert a single oxyroot `Branch` to a Vortex `ArrayRef`.
+/// Convert a single ROOT `Branch` to a Vortex `ArrayRef`.
 ///
 /// Dispatches on the Rust interpretation string returned by `branch.interpretation()`.
-pub fn branch_to_array(branch: &oxyroot::Branch) -> Result<ArrayRef> {
+pub fn branch_to_array(branch: &Branch) -> Result<ArrayRef> {
     let interp = branch.interpretation();
     match interp.as_str() {
         "bool" => {
@@ -170,6 +172,16 @@ pub fn branch_to_array(branch: &oxyroot::Branch) -> Result<ArrayRef> {
         "u64" => primitive_branch::<u64>(branch),
         "f32" => primitive_branch::<f32>(branch),
         "f64" => primitive_branch::<f64>(branch),
+        "Vec<i8>" => list_branch::<i8>(branch),
+        "Vec<i16>" => list_branch::<i16>(branch),
+        "Vec<i32>" => list_branch::<i32>(branch),
+        "Vec<i64>" => list_branch::<i64>(branch),
+        "Vec<u8>" => list_branch::<u8>(branch),
+        "Vec<u16>" => list_branch::<u16>(branch),
+        "Vec<u32>" => list_branch::<u32>(branch),
+        "Vec<u64>" => list_branch::<u64>(branch),
+        "Vec<f32>" => list_branch::<f32>(branch),
+        "Vec<f64>" => list_branch::<f64>(branch),
         "String" => {
             let vals: Vec<String> = branch.as_iter::<String>()?.collect();
             Ok(VarBinViewArray::from_iter_str(vals).into_array())
@@ -183,6 +195,16 @@ fn is_supported_interpretation(interp: &str) -> bool {
         interp,
         "bool" | "i8" | "i16" | "i32" | "i64" | "u8" | "u16" | "u32" | "u64" | "f32" | "f64"
             | "String"
+            | "Vec<i8>"
+            | "Vec<i16>"
+            | "Vec<i32>"
+            | "Vec<i64>"
+            | "Vec<u8>"
+            | "Vec<u16>"
+            | "Vec<u32>"
+            | "Vec<u64>"
+            | "Vec<f32>"
+            | "Vec<f64>"
     )
 }
 
@@ -193,10 +215,36 @@ fn is_supported_interpretation(interp: &str) -> bool {
 /// Collect a primitive-typed branch into a `PrimitiveArray`.
 ///
 /// Uses the `FromIterator<T>` impl on `PrimitiveArray`, which is available for all `T: NativePType`.
-fn primitive_branch<T>(branch: &oxyroot::Branch) -> Result<ArrayRef>
+fn primitive_branch<T>(branch: &Branch) -> Result<ArrayRef>
 where
-    T: oxyroot::UnmarshalerInto<Item = T> + NativePType + 'static,
+    T: UnmarshalerInto<Item = T> + NativePType + 'static,
 {
     let arr: PrimitiveArray = branch.as_iter::<T>()?.collect();
     Ok(arr.into_array())
+}
+
+fn list_branch<T>(branch: &Branch) -> Result<ArrayRef>
+where
+    T: UnmarshalerInto<Item = T> + NativePType + 'static,
+{
+    let values: Vec<Vec<T>> = branch.as_iter::<Vec<T>>()?.collect();
+    let mut offsets = Vec::with_capacity(values.len() + 1);
+    offsets.push(0_u32);
+    let mut flattened = Vec::new();
+
+    for row in values {
+        flattened.extend(row);
+        offsets.push(
+            u32::try_from(flattened.len()).context("vector branch exceeds u32 offset range")?,
+        );
+    }
+
+    let elements: PrimitiveArray = flattened.into_iter().collect();
+    let offsets: PrimitiveArray = offsets.into_iter().collect();
+    Ok(ListArray::new(
+        elements.into_array(),
+        offsets.into_array(),
+        Validity::NonNullable,
+    )
+    .into_array())
 }
