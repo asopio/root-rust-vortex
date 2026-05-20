@@ -8,3 +8,6 @@ dist/
 __pycache__/
 .venv/
 /data/*.vortex
+# pixi environments
+.pixi/*
+!.pixi/config.toml
