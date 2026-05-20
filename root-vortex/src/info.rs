@@ -1,7 +1,7 @@
 //! Utilities for inspecting the structure of a ROOT file without conversion.
 
+use crate::RootFile;
 use anyhow::{Context, Result};
-use oxyroot::RootFile;
 use std::path::Path;
 
 /// Metadata for a single TTree branch.
@@ -11,7 +11,7 @@ pub struct BranchInfo {
     pub name: String,
     /// C++ type name as reported by ROOT.
     pub cpp_type: String,
-    /// Rust type interpretation (from oxyroot).
+    /// Rust type interpretation.
     pub rust_type: String,
     /// Number of entries.
     pub entries: i64,
